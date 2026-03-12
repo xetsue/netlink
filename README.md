@@ -22,17 +22,43 @@ Netlink is a lightweight, aesthetically pleasing local file-sharing server built
 - **Sorting**: Sort files by Name (A-Z/Z-A), Date (Newest/Oldest), or Size (Largest/Smallest).
 - Search in current directory (Global search is not implemented at the moment)
 
-## Usage
+## Quick Start
 1. Save the script as `netlink.py` to any target location.
 2. Open file location run `python netlink.py` 
-- **Start Options**: 
+- **Start Options**: (Refer to Notes) 
     - Serve a specific directory.  (From current location of the script)
     - Serve a single isolated file. (From current location of the script)
     - Serve the entire device storage (Support Windows, Mac, IOS, Android/Termux).
-- **Customization**: Support frontend custom accent colors via args `--color "HEX_VALUE"` , White for example `python netlink.py --color "#ffffff" ` 
+- **Customization**: Support frontend custom accent colors via args. 
 3. Send / Open the displayed link to access the frontend in any browser.
-  
-## Quick Start
+
+## Notes
+### CLI Arguments
+
+You can bypass the interactive menu by passing arguments directly when launching the script:
+
+| Argument | Description | Options | Default |
+| :--- | :--- | :--- | :--- |
+| `--path` | The absolute or relative path to serve. | Path string | N/A |
+| `--type` | Define if the target is a folder or a file. | `dir`, `file` | N/A |
+| `--color` | Custom CSS hex color for the UI accent. | Hex code | `#00ffcc` |
+
+---
+
+### Usage Examples
+**Frontend Color Theming**
+```bash
+python netlink.py --color "HEX_VALUE"
+```
+**Serve frontend with a white theme:**
+```bash
+python netlink.py --color "#ffffff"
+```
+**Serve a specific folder with a custom purple theme:**
+```bash
+python netlink.py --path ./your_folder --type dir --color "#9b59b6"
+```
+
 
 ### Prerequisites
 - Python 3.x installed.
