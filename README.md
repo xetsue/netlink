@@ -30,8 +30,8 @@ Netlink is a lightweight, aesthetically pleasing local file-sharing server built
     - Serve a single isolated file. (From current location of the script)
     - Serve the entire device storage (Support Windows, Mac, IOS, Android/Termux).
 - **Customization**: Support frontend custom accent colors via args `--color "HEX_VALUE"` , White for example `python netlink.py --color "#ffffff" ` 
-3. Send / Open the displayed link to access the frontend in any browser. Automatically detects and displays your local network IP for easy access from other devices.
-
+3. Send / Open the displayed link to access the frontend in any browser.
+  
 ## Quick Start
 
 ### Prerequisites
