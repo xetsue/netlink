@@ -23,6 +23,7 @@ Netlink is a lightweight, aesthetically pleasing local file-sharing server built
 - Search in current directory (Global search is not implemented at the moment)
 
 ## Quick Start
+### Compatibility: Windows, Termux (Android), MacOS, Linux
 1. Save the script as `netlink.py` to any target location.
 2. Open file location run `python netlink.py` 
 - **Start Options**: (Refer to Notes) 
