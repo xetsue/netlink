@@ -1,5 +1,5 @@
 # netlink
-A Python file transfer script through local network with HTML frontend.
+A Python file transfer script through same Wi-fi / local network with HTML frontend.
 
 # 🔗 Netlink — Necessary Speed
 
