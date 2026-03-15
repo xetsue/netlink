@@ -19,10 +19,19 @@ ASCII_ART = r"""
   /\_\/\_\  \/\_____\  \ \_____\ 
   \/_/\/_/   \/_____/   \/_____/
   
-  [   Netlink â€” Necessary Speed   ] 
+  [   Netlink — Necessary Speed   ] 
 """
 
-class GlassHandler(http.server.SimpleHTTPRequestHandler):
+class GlassHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        path = self.translate_path(self.path)
+        if os.path.isdir(path):
+            self.list_directory(path)
+        elif os.path.isfile(path):
+            self.stream_file(path)
+        else:
+            self.send_error(404, "File Not Found")
+
     def translate_path(self, path):
         if target_type == "file":
             if path == "/":
@@ -31,7 +40,30 @@ class GlassHandler(http.server.SimpleHTTPRequestHandler):
                 return target_path
             else:
                 return ""
-        return super().translate_path(path)
+        
+        path = urllib.parse.unquote(path).split('?', 1)[0].split('#', 1)[0]
+        path = os.path.normpath(path).lstrip('/')
+        return os.path.abspath(os.path.join(os.getcwd(), path))
+
+    def stream_file(self, path):
+        try:
+            file_size = os.path.getsize(path)
+            with open(path, 'rb') as f:
+                self.send_response(200)
+                self.send_header("Content-type", "application/octet-stream")
+                self.send_header("Content-Disposition", f'attachment; filename="{os.path.basename(path)}"')
+                self.send_header("Content-Length", str(file_size))
+                self.end_headers()
+                
+                while True:
+                    chunk = f.read(65536)
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
+        except (OSError, PermissionError):
+            self.send_error(403, "System Access Denied")
+        except Exception:
+            pass
 
     def list_directory(self, path):
         displaypath = urllib.parse.unquote(self.path)
@@ -151,13 +183,10 @@ sortSelect.addEventListener('change', (e) => {
 </body>
 </html>
 """
-        encoded = html.encode('utf-8', 'surrogateescape')
         self.send_response(200)
         self.send_header("Content-type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(encoded)))
         self.end_headers()
-        self.wfile.write(encoded)
-        return None
+        self.wfile.write(html.encode('utf-8', 'surrogateescape'))
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -214,7 +243,7 @@ def main():
             os.chdir(target_path)
         else: sys.exit(1)
 
-    with socketserver.TCPServer(("", 8000), GlassHandler) as httpd:
+    with socketserver.ThreadingTCPServer(("", 8000), GlassHandler) as httpd:
         print(f"\nServer Address: http://{get_local_ip()}:8000\n")
         try: httpd.serve_forever()
         except KeyboardInterrupt: sys.exit(0)
