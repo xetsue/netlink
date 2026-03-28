@@ -13,6 +13,11 @@ Netlink is a lightweight, aesthetically pleasing local file-sharing server built
 
 >Desktop
 >
+><img width="980" height="540"  alt="image" src="https://github.com/user-attachments/assets/fd4e4174-dddc-489c-8a81-d03db0b7e960" />
+
+
+><img width="980" height="540" alt="image" src="https://github.com/user-attachments/assets/2f0dd1a9-3980-4c57-bebe-c424188337ed" />
+
 ><img width="820" height="540" alt="image" src="https://github.com/user-attachments/assets/a33cee8b-28e8-4cc6-8b2d-af124a4f433d" />
 
 >Mobile
