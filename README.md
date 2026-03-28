@@ -1,5 +1,5 @@
 # netlink
-A Python file transfer script through same Wi-fi / local network with HTML frontend.
+A Python file transfer script through the same Wi-fi / local network with an HTML frontend.
 
 # 🔗 Netlink — Necessary Speed
 
@@ -43,7 +43,7 @@ You can bypass the interactive menu by passing arguments directly when launching
 | :--- | :--- | :--- | :--- |
 | `--path` | The absolute or relative path to serve. | Path string | N/A |
 | `--type` | Define if the target is a folder or a file. | `dir`, `file` | N/A |
-| `--color` | Custom CSS hex color for the UI accent. | Hex code | `#00ffcc` |
+| `--color` | Custom CSS hex color for the UI accent. | Hex code | `#ffe8a8` |
 
 ---
 
