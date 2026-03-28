@@ -53,7 +53,7 @@ You can bypass the interactive menu by passing arguments directly when launching
 | :--- | :--- | :--- | :--- |
 | `--path` | The absolute or relative path to serve. | Path string | N/A |
 | `--type` | Define if the target is a folder or a file. | `dir`, `file` | N/A |
-| `--color` | Custom CSS hex color for the UI accent. | Hex code | `#ffe8a8` |
+| `--color` | Custom CSS hex color for the UI accent. | Hex code | `#ffffff` |
 
 ---
 
