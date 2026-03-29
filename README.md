@@ -29,11 +29,25 @@ Netlink is a lightweight, aesthetically pleasing local file-sharing server built
 - Search in current directory (Global search is not implemented at the moment)
 
 ## Quick Start
+### Download
 Download from [https://github.com/xetsue/netlink/releases](https://github.com/xetsue/netlink/releases) .
 Variants available include: 
 - Python `.py` script
 - Lite version (refer to v1.1.0 changelog in releases)
 - Pre-compiled `.exe` files (`netlink.exe` / `nL-exe.zip`)
+
+  
+### Compile (`exe`)
+- Installing [PyInstaller](https://pyinstaller.org/en/stable/installation.html)
+```bash
+pip install pyinstaller
+```
+- Compiling the script into a portable `.exe` file.
+```bash
+pyinstaller netlink.py
+```
+- This step will create a build and dist folder where the results can be found inside `dist`. 
+
 ### Compatibility: Windows, Termux (Android), MacOS, Linux
 1. Save the script as `netlink.py` to any target location.
 2. Open file location run `python netlink.py` 
