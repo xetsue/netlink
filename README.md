@@ -4,7 +4,7 @@ A Python file transfer script through the same Wi-fi / local network with an HTM
 # 🔗 Netlink — Necessary Speed
 
 Netlink is a lightweight, aesthetically pleasing local file-sharing server built with Python. It transforms the standard, bland directory listing into a simple yet modern interface with very minimal yet necessary features. 
-> This was a small and straightforward project made in 1 day.
+> This was a small and straightforward project initially made in 1 day.
 
 ## Features And Previews
 > Script Menu
