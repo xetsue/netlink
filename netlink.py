@@ -9,6 +9,24 @@ import shutil
 import tempfile
 import json
 import datetime
+import atexit
+import zipfile
+import random
+import string
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CUSTOM_TEMP_DIR = os.path.join(BASE_DIR, "netlink_tmp")
+os.makedirs(CUSTOM_TEMP_DIR, exist_ok=True)
+tempfile.tempdir = CUSTOM_TEMP_DIR
+
+compression_enabled = False
+UPLOAD_PASSWORD = ""
+
+def cleanup_temp_dir():
+    if os.path.exists(CUSTOM_TEMP_DIR):
+        shutil.rmtree(CUSTOM_TEMP_DIR, ignore_errors=True)
+
+atexit.register(cleanup_temp_dir)
 
 target_path = ""
 target_type = ""
@@ -16,7 +34,11 @@ accent_color = "#ffffff"
 custom_color_flag = "false"
 
 RED = "\033[91m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+CYAN = "\033[96m"
 RESET = "\033[0m"
+
 ASCII_ART = r"""
   __  __     ______     __  __    
 /\_\_\_\   /  ___\   /\ \/\ \   
@@ -28,6 +50,38 @@ ASCII_ART = r"""
 """
 
 class GlassHandler(http.server.BaseHTTPRequestHandler):
+    def do_POST(self):
+        global UPLOAD_PASSWORD, target_path, target_type
+        if self.path == '/upload':
+            pwd = self.headers.get('X-Upload-Password')
+            if pwd != UPLOAD_PASSWORD:
+                self.send_response(403)
+                self.end_headers()
+                return
+            
+            file_name = urllib.parse.unquote(self.headers.get('X-File-Name', 'uploaded_file'))
+            content_length = int(self.headers.get('Content-Length', 0))
+            save_dir = target_path if target_type == "dir" else os.path.dirname(target_path)
+            save_path = os.path.join(save_dir, os.path.basename(file_name))
+            
+            try:
+                with open(save_path, 'wb') as f:
+                    remaining = content_length
+                    while remaining > 0:
+                        chunk_size = min(65536, remaining)
+                        chunk = self.rfile.read(chunk_size)
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                        remaining -= len(chunk)
+                self.send_response(200)
+                self.end_headers()
+            except Exception:
+                self.send_response(500)
+                self.end_headers()
+        else:
+            self.send_error(404, "Not Found")
+
     def do_GET(self):
         parsed_url = urllib.parse.urlparse(self.path)
         query = urllib.parse.parse_qs(parsed_url.query)
@@ -35,12 +89,12 @@ class GlassHandler(http.server.BaseHTTPRequestHandler):
 
         if 'zip' in query:
             folder_name = query['zip'][0]
-            folder_path = os.path.join(path, folder_name)
+            folder_path = os.path.normpath(os.path.join(path, folder_name))
             if os.path.isdir(folder_path):
                 temp_dir = tempfile.mkdtemp()
-                zip_base = os.path.join(temp_dir, os.path.basename(os.path.normpath(folder_path)))
-                shutil.make_archive(zip_base, 'zip', folder_path)
-                zip_filepath = zip_base + '.zip'
+                zip_filename = os.path.basename(folder_path) + ".zip"
+                zip_filepath = os.path.join(temp_dir, zip_filename)
+                self.create_fast_zip(folder_path, zip_filepath)
                 self.stream_file(zip_filepath, cleanup_dir=temp_dir)
                 return
 
@@ -104,6 +158,29 @@ class GlassHandler(http.server.BaseHTTPRequestHandler):
             self.stream_file(path)
         else:
             self.send_error(404, "File Not Found")
+
+    def create_fast_zip(self, source_dir, output_zip):
+        mode = zipfile.ZIP_DEFLATED if compression_enabled else zipfile.ZIP_STORED
+        comp_text = "COMPRESSING" if compression_enabled else "PACKAGING (FAST)"
+        
+        files_to_zip = []
+        for root, _, files in os.walk(source_dir):
+            for file in files:
+                files_to_zip.append(os.path.join(root, file))
+        
+        total = len(files_to_zip)
+        print(f"\n{YELLOW}[{comp_text}]{RESET} Target: {os.path.basename(source_dir)}")
+        
+        with zipfile.ZipFile(output_zip, 'w', mode, allowZip64=True) as zf:
+            for i, file_path in enumerate(files_to_zip, 1):
+                arcname = os.path.relpath(file_path, source_dir)
+                zf.write(file_path, arcname)
+                
+                percent = (i / total) * 100
+                sys.stdout.write(f"\r{GREEN}Progress: [{i}/{total}] {percent:.1f}% | Current: {arcname[:30]}...{RESET}")
+                sys.stdout.flush()
+        
+        print(f"\n{GREEN}Archive Ready.{RESET}\n")
 
     def translate_path(self, path):
         if target_type == "file":
@@ -236,6 +313,11 @@ a {{ text-decoration: none; transition: all 0.3s ease; background: rgba(255,255,
     <button class="settings-btn" id="settingsBtn">⋰</button>
     <div class="settings-panel" id="settingsPanel">
         <div class="setting-item">
+            <span>Upload Files</span>
+            <button id="uploadBtn" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--accent-color); padding: 5px 15px; border-radius: 4px; cursor: pointer; font-family: monospace;">Upload</button>
+            <input type="file" id="fileUploader" style="display: none;" multiple>
+        </div>
+        <div class="setting-item">
             <span>Group Priority</span>
             <select id="groupPriority">
                 <option value="folders">Folders First</option>
@@ -345,8 +427,11 @@ const backendColor = '""" + accent_color + """';
 let animIdx = 0;
 const frames = ['( =.=)', '( >.<)', '( =.=)', '(>.< )', '(=.= )', '(>ᴗ<)', '(=ᴗ=)', '(>ᴗ<)'];
 setInterval(() => {
-    document.getElementById('ascii-anim').innerText = frames[animIdx];
-    animIdx = (animIdx + 1) % frames.length;
+    const el = document.getElementById('ascii-anim');
+    if(el) {
+        el.innerText = frames[animIdx];
+        animIdx = (animIdx + 1) % frames.length;
+    }
 }, 600);
 
 const root = document.documentElement;
@@ -362,6 +447,9 @@ const sectionTypeCheck = document.getElementById('sectionTypeCheck');
 const confFolderCheck = document.getElementById('confFolderCheck');
 const confFileCheck = document.getElementById('confFileCheck');
 const groupPriority = document.getElementById('groupPriority');
+
+const uploadBtn = document.getElementById('uploadBtn');
+const fileUploader = document.getElementById('fileUploader');
 
 const modal = document.getElementById('confirmModal');
 const modalMsg = document.getElementById('modalMsg');
@@ -424,6 +512,57 @@ colorPicker.addEventListener('input', (e) => {
 fontSizeSlider.addEventListener('input', (e) => {
     root.style.setProperty('--font-size', e.target.value + 'px');
     saveSettings();
+});
+
+uploadBtn.addEventListener('click', () => {
+    fileUploader.click();
+});
+
+fileUploader.addEventListener('change', async (e) => {
+    const files = e.target.files;
+    if (!files.length) return;
+
+    const pwd = prompt('Enter upload password:');
+    if (!pwd) {
+        fileUploader.value = '';
+        return;
+    }
+
+    uploadBtn.innerText = "Uploading...";
+    uploadBtn.style.opacity = "0.5";
+    let successCount = 0;
+    
+    for (let file of files) {
+        try {
+            const res = await fetch('/upload', {
+                method: 'POST',
+                headers: { 
+                    'X-Upload-Password': pwd, 
+                    'X-File-Name': encodeURIComponent(file.name) 
+                },
+                body: file
+            });
+            if (res.status === 403) {
+                alert('Invalid Password for: ' + file.name);
+                break;
+            } else if (res.ok) {
+                successCount++;
+            } else {
+                throw new Error();
+            }
+        } catch (err) {
+            alert('Upload failed for: ' + file.name + '\\nCheck system write permissions.');
+        }
+    }
+    
+    if (successCount > 0) {
+        alert(successCount + ' file(s) uploaded successfully.');
+        window.location.reload();
+    }
+    
+    uploadBtn.innerText = "Upload";
+    uploadBtn.style.opacity = "1";
+    fileUploader.value = '';
 });
 
 function showConfirm(msg, url) {
@@ -624,12 +763,15 @@ def get_local_ip():
     return ip
 
 def main():
-    global target_path, target_type, accent_color, custom_color_flag
+    global target_path, target_type, accent_color, custom_color_flag, compression_enabled, UPLOAD_PASSWORD
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", type=str)
     parser.add_argument("--type", choices=["dir", "file"])
     parser.add_argument("--color", type=str, default=None)
+    parser.add_argument("--compress", action="store_true")
     args = parser.parse_args()
+
+    compression_enabled = args.compress
 
     if args.color:
         accent_color = args.color
@@ -673,15 +815,19 @@ def main():
             os.chdir(target_path)
         else: sys.exit(1)
 
+    UPLOAD_PASSWORD = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+
     socketserver.ThreadingTCPServer.allow_reuse_address = True
     with socketserver.ThreadingTCPServer(("", 8000), GlassHandler) as httpd:
-        print(f"\nServer Address: http://{get_local_ip()}:8000\nhttp://0.0.0.0:8000\n")
+        print(f"\n{CYAN}[SECURITY]{RESET} Upload Password: {YELLOW}{UPLOAD_PASSWORD}{RESET}")
+        print(f"Server Address: http://{get_local_ip()}:8000\nhttp://0.0.0.0:8000\n")
         try: 
             httpd.serve_forever()
         except KeyboardInterrupt: 
             pass
         finally:
             httpd.server_close()
+            cleanup_temp_dir()
             sys.exit(0)
 
 if __name__ == "__main__":
